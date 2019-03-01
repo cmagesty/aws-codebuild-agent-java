@@ -13,11 +13,11 @@
 FROM ubuntu:14.04.5
 
 ENV DOCKER_BUCKET="download.docker.com" \
-    DOCKER_VERSION="17.09.0-ce" \
+    DOCKER_VERSION="18.09.0" \
     DOCKER_CHANNEL="stable" \
-    DOCKER_SHA256="a9e90a73c3cdfbf238f148e1ec0eaff5eb181f92f35bdd938fd7dab18e1c4647" \
+    DOCKER_SHA256="08795696e852328d66753963249f4396af2295a7fe2847b839f7102e25e47cb9" \
     DIND_COMMIT="3b5fac462d21ca164b3778647420016315289034" \
-    DOCKER_COMPOSE_VERSION="1.21.2" \
+    DOCKER_COMPOSE_VERSION="1.23.2" \
     GITVERSION_VERSION="3.6.5"
 
 # Install git, SSH, and other utilities
@@ -92,10 +92,7 @@ RUN set -ex \
 # on the public repos.
 
 RUN set -ex \
-    && wget "https://bootstrap.pypa.io/2.6/get-pip.py" -O /tmp/get-pip.py \
-    && python /tmp/get-pip.py \
-    && pip install awscli==1.* \
-    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && pip3 install awscli boto3
 
 VOLUME /var/lib/docker
 
@@ -192,5 +189,3 @@ RUN set -ex \
 		&& rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN npm set unsafe-perm true
-
-RUN dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &>/var/log/docker.log & 
