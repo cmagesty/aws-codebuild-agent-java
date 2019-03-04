@@ -24,6 +24,7 @@ ENV DOCKER_BUCKET="download.docker.com" \
 RUN set -ex \
     && echo 'Acquire::CompressionTypes::Order:: "gz";' > /etc/apt/apt.conf.d/99use-gzip-compression \
     && apt-get update \
+    && apt-get -y install jq \
     && apt install -y apt-transport-https \
     && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
     && echo "deb https://download.mono-project.com/repo/ubuntu stable-trusty main" | tee /etc/apt/sources.list.d/mono-official-stable.list \
@@ -91,8 +92,12 @@ RUN set -ex \
 # Install dependencies by all python images equivalent to buildpack-deps:jessie
 # on the public repos.
 
+# Install pip and Python3 dependencies
+RUN apt-get update -y \
+    && apt-get install -y python3.4 python-pip
+
 RUN set -ex \
-    && pip3 install awscli boto3
+    && pip install awscli boto3
 
 VOLUME /var/lib/docker
 
@@ -120,20 +125,17 @@ RUN set -ex \
     && add-apt-repository ppa:openjdk-r/ppa \
     && apt-get update \
     && apt-get install -y python-setuptools=$PYTHON_TOOL_VERSION \
-
     # Install OpenJDK 8
     && apt-get install -y openjdk-${JAVA_VERSION}-jdk=$JDK_VERSION \
     && apt-get install -y --no-install-recommends ca-certificates-java \
     && apt-get clean \
     # Ensure Java cacerts symlink points to valid location
     && update-ca-certificates -f \
-
     # Install Ant
     && curl -LSso /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz https://archive.apache.org/dist/ant/binaries/apache-ant-$ANT_VERSION-bin.tar.gz  \
     && echo "$ANT_DOWNLOAD_SHA512 /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz" | sha512sum -c - \
     && tar -xzf /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz -C /opt \
     && update-alternatives --install /usr/bin/ant ant /opt/apache-ant-$ANT_VERSION/bin/ant 10000 \
-
     # Install Maven
     && mkdir -p $MAVEN_HOME \
     && curl -LSso /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz https://apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
@@ -141,13 +143,11 @@ RUN set -ex \
     && tar xzvf /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz -C $MAVEN_HOME --strip-components=1 \
     && update-alternatives --install /usr/bin/mvn mvn /opt/maven/bin/mvn 10000 \
     && mkdir -p $MAVEN_CONFIG \
-
     # Install Gradle
     && curl -LSso /var/tmp/gradle-$GRADLE_VERSION-bin.zip https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip \
     && echo "$GRADLE_DOWNLOAD_SHA256 /var/tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c - \
     && unzip /var/tmp/gradle-$GRADLE_VERSION-bin.zip -d /opt \
     && update-alternatives --install /usr/local/bin/gradle gradle /opt/gradle-$GRADLE_VERSION/bin/gradle 10000 \
-
     # Cleanup
     && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && apt-get clean
@@ -189,3 +189,8 @@ RUN set -ex \
 		&& rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN npm set unsafe-perm true
+
+RUN npm install --silent --save-dev -g \
+        gulp-cli \
+        typescript \
+        parcel-bundler
